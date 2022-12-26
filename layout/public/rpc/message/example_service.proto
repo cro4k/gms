@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package message;
+
+option go_package="./rpcmessage";
+
+import public "message/example.proto";
+
+message ExampleSayHelloRequest {
+  ExampleUser user = 1;
+}
+
+message ExampleSayHelloResponse {
+  string message = 1;
+}
+
+service ExampleUserService {
+  rpc SayHello(ExampleSayHelloRequest)returns(ExampleSayHelloResponse);
+}

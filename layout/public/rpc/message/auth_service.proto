@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package message;
+
+option go_package="./rpcmessage";
+
+message TokenVerifyRequest {
+  string token = 1;
+}
+
+message TokenVerifyResponse {
+  string id = 1;
+  string username = 2;
+  string nickname = 3;
+  int32 gender = 4;
+  string avatar = 5;
+  string bio = 6;
+}
+
+service AuthService {
+  rpc TokenVerify(TokenVerifyRequest) returns (TokenVerifyResponse);
+}
