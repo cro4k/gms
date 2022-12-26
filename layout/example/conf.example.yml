@@ -1,0 +1,15 @@
+env: develop
+
+db:
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  pass: root
+  name: example
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+
+etcd:
+  endpoints: ["127.0.0.1:1234"]

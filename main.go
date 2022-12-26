@@ -17,6 +17,7 @@ func main() {
 		return
 	}
 
+	var err error
 	switch cmd.Cmd {
 	case "create":
 		opt := project.CreateOption{
@@ -25,36 +26,37 @@ func main() {
 			Service: cmd.Others,
 			Go:      cmd.Val("go"),
 		}
-		if err := project.Create(opt); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		err = project.Create(opt)
 	case "init":
-		if err := project.Init(); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		err = project.Init()
 	case "add":
-		if err := project.Add(append([]string{cmd.Name}, cmd.Others...)...); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		err = project.Add(append([]string{cmd.Name}, cmd.Others...)...)
+	case "fix":
+		err = project.Fix()
+	}
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
 
 const (
 	createHelp = "create 新建项目\n" +
-		"   新建一个项目并自动初始化\n" +
-		"   Usage: gms create [project] [service1] [service2]...\n" +
-		"   option:\n" +
-		"      -p 自定义module前缀\n" +
-		"      -go 指定go版本"
+		"  新建一个项目并自动初始化\n" +
+		"  Usage: gms create [project] [service1] [service2]...\n" +
+		"  option:\n" +
+		"    -p 自定义module前缀\n" +
+		"    -go 指定go版本"
 	initHelp = "init 初始化当前项目\n" +
-		"   根据gms.lock.yml配置初始化项目，配置文件必须存在\n" +
-		"   Usage: gms init"
+		"  根据gms.lock.yml配置初始化项目，配置文件必须存在\n" +
+		"  Usage: gms init"
 	addHelp = "add 添加服务\n" +
-		"   向当前项目内新增服务\n" +
-		"   Usage: gms add [service1] [service2]"
+		"  向当前项目内新增服务\n" +
+		"  Usage: gms add [service1] [service2]..."
+
+	fixHelp = "fix 补全缺失服务\n" +
+		"  向当前项目内，添加缺失的服务，已存在的服务将跳过创建\n" +
+		"  Usage: gms fix"
 )
 
 func help(cmd string) string {
@@ -66,10 +68,13 @@ func help(cmd string) string {
 		return initHelp
 	case "add":
 		return addHelp
+	case "fix":
+		return fixHelp
 	default:
 		return createHelp + "\n\n" +
 			initHelp + "\n\n" +
-			addHelp
+			addHelp + "\n\n" +
+			fixHelp
 	}
 }
 

@@ -2,6 +2,7 @@ package project
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/cro4k/gms/data"
 	"github.com/cro4k/gms/version"
@@ -49,7 +50,9 @@ func Create(options ...CreateOption) error {
 	if len(options) > 0 {
 		option = options[0]
 	}
-
+	if _, err := os.Stat(option.Name); os.IsExist(err) {
+		return errors.New("project '" + option.Name + "' has been existed.")
+	}
 	if err := os.MkdirAll(option.Name, 0744); err != nil {
 		return err
 	}
@@ -89,45 +92,13 @@ func initProject(path string, lock *LockInfo) error {
 }
 
 func createPublic(path string, lock *LockInfo) error {
-	//os.MkdirAll(fmt.Sprintf("%s/public", path), 0777)
-	//
-	//module := strings.Trim(fmt.Sprintf("%s/public", lock.Prefix), "/")
-	//for _, filename := range data.Public.List() {
-	//	content, err := data.Public.Find(filename)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	content = bytes.ReplaceAll(content, []byte(publicLayout), []byte(module))
-	//	output := strings.ReplaceAll(fmt.Sprintf("%s/public/%s", path, filename), "\\", "/")
-	//	os.MkdirAll(filepath.Dir(output), 0777)
-	//	if err := os.WriteFile(output, content, 0644); err != nil {
-	//		return err
-	//	}
-	//}
-	//mod := fmt.Sprintf("%s/public/go.mod", path)
-	//err := os.WriteFile(mod, []byte(fmt.Sprintf(gomod, module, lock.GoVersion)), 0644)
-	//return err
 	return create(data.Public, path, "public", publicLayout, false, lock)
 }
 
 func createService(path string, service string, lock *LockInfo) error {
-	//os.MkdirAll(fmt.Sprintf("%s/%s", path, service), 0777)
-	//module := strings.Trim(fmt.Sprintf("%s/%s", lock.Prefix, service), "/")
-	//for _, filename := range data.Service.List() {
-	//	content, err := data.Service.Find(filename)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	content = bytes.ReplaceAll(content, []byte(serviceLayout), []byte(module))
-	//	output := fmt.Sprintf("%s/%s/%s", path, service, filename)
-	//	os.MkdirAll(filepath.Dir(output), 0777)
-	//	if err := os.WriteFile(output, content, 0644); err != nil {
-	//		return err
-	//	}
-	//}
-	//mod := fmt.Sprintf("%s/%s/go.mod", path, service)
-	//err := os.WriteFile(mod, []byte(fmt.Sprintf(gomod, module, lock.GoVersion)), 0644)
-	//return err
+	if _, err := os.Stat(fmt.Sprintf("%s/%s", path, service)); os.IsExist(err) {
+		return errors.New("service '" + service + "' has been existed.")
+	}
 	return create(data.Service, path, service, serviceLayout, true, lock)
 }
 
@@ -197,15 +168,33 @@ func Add(name ...string) error {
 }
 
 func add(lock *LockInfo, name string) error {
-	for _, v := range lock.Service {
-		if v == name {
-			return fmt.Errorf("service %s has been existed", name)
-		}
-	}
 	if err := createService(".", name, lock); err != nil {
 		return err
 	}
 	lock.Service = append(lock.Service, name)
 	_ = lock.clean(".")
 	return lock.create(".")
+}
+
+func Fix() error {
+	lock, err := loadLock()
+	if err != nil {
+		return err
+	}
+	
+	if _, err := os.Stat("public"); os.IsNotExist(err) {
+		if err := createPublic(".", lock); err != nil {
+			return err
+		}
+	}
+
+	for _, service := range lock.Service {
+		if _, err := os.Stat(service); os.IsExist(err) {
+			continue
+		}
+		if err := createService(".", service, lock); err != nil {
+			return err
+		}
+	}
+	return nil
 }

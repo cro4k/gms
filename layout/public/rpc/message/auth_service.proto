@@ -6,6 +6,7 @@ option go_package="./rpcmessage";
 
 message TokenVerifyRequest {
   string token = 1;
+  string cid = 2;
 }
 
 message TokenVerifyResponse {
