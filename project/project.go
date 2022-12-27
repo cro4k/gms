@@ -16,6 +16,9 @@ const (
 	layout        = "github.com/cro4k/gms/layout"
 	publicLayout  = layout + "/public"
 	serviceLayout = layout + "/example"
+
+	PatternProjectName = "{{project}}"
+	PatternServiceName = "{{service}}"
 )
 
 type CreateOption struct {
@@ -105,14 +108,16 @@ func createService(path string, service string, lock *LockInfo) error {
 func create(resources *packr.Box, path string, name string, layout string, replacePublic bool, lock *LockInfo) error {
 	os.MkdirAll(fmt.Sprintf("%s/%s", path, name), 0777)
 	module := strings.Trim(fmt.Sprintf("%s/%s", lock.Prefix, name), "/")
-	public := strings.Trim(fmt.Sprintf("%s/public", lock.Prefix), "/")
+	publicModule := strings.Trim(fmt.Sprintf("%s/public", lock.Prefix), "/")
 	for _, filename := range resources.List() {
 		content, err := resources.Find(filename)
 		if err != nil {
 			return err
 		}
 		content = bytes.ReplaceAll(content, []byte(layout), []byte(module))
-		content = bytes.ReplaceAll(content, []byte(publicLayout), []byte(public))
+		content = bytes.ReplaceAll(content, []byte(publicLayout), []byte(publicModule))
+		content = bytes.ReplaceAll(content, []byte(PatternProjectName), []byte(lock.Name))
+		content = bytes.ReplaceAll(content, []byte(PatternServiceName), []byte(name))
 		output := strings.ReplaceAll(fmt.Sprintf("%s/%s/%s", path, name, filename), "\\", "/")
 		os.MkdirAll(filepath.Dir(output), 0777)
 		if err := os.WriteFile(output, content, 0644); err != nil {
@@ -123,7 +128,7 @@ func create(resources *packr.Box, path string, name string, layout string, repla
 
 	modContent := fmt.Sprintf(gomod, module, lock.GoVersion, lock.Prefix)
 	if replacePublic {
-		modContent += "\n" + fmt.Sprintf("replace %s v0.0.0 => ../public\n", public)
+		modContent += "\n" + fmt.Sprintf("replace %s v0.0.0 => ../public\n", publicModule)
 	}
 	err := os.WriteFile(mod, []byte(modContent), 0644)
 	return err
@@ -181,7 +186,7 @@ func Fix() error {
 	if err != nil {
 		return err
 	}
-	
+
 	if _, err := os.Stat("public"); os.IsNotExist(err) {
 		if err := createPublic(".", lock); err != nil {
 			return err
