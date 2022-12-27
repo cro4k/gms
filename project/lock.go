@@ -56,3 +56,12 @@ func (i *LockInfo) clean(path string) error {
 	}
 	return os.Remove(filepath)
 }
+
+func (i *LockInfo) has(service string) bool {
+	for _, v := range i.Service {
+		if v == service {
+			return true
+		}
+	}
+	return false
+}

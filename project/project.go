@@ -172,11 +172,14 @@ func Add(name ...string) error {
 	return nil
 }
 
-func add(lock *LockInfo, name string) error {
-	if err := createService(".", name, lock); err != nil {
+func add(lock *LockInfo, service string) error {
+	if err := createService(".", service, lock); err != nil {
 		return err
 	}
-	lock.Service = append(lock.Service, name)
+	if lock.has(service) {
+		return nil
+	}
+	lock.Service = append(lock.Service, service)
 	_ = lock.clean(".")
 	return lock.create(".")
 }
