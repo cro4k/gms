@@ -34,6 +34,12 @@ func main() {
 		err = project.Add(append([]string{cmd.Name}, cmd.Others...)...)
 	case "fix":
 		err = project.Fix()
+	case "status":
+		var message string
+		message, err = project.Status()
+		if err == nil {
+			_, _ = os.Stdout.WriteString(message)
+		}
 	}
 	if err != nil {
 		fmt.Println(err)
@@ -58,6 +64,7 @@ const (
 	fixHelp = "fix 补全缺失服务\n" +
 		"  向当前项目内，添加缺失的服务，已存在的服务将跳过创建\n" +
 		"  Usage: gms fix"
+	statusHelp = "status 查看状态"
 )
 
 func help(cmd string) string {
@@ -71,11 +78,14 @@ func help(cmd string) string {
 		return addHelp
 	case "fix":
 		return fixHelp
+	case "status":
+		return statusHelp
 	default:
 		return createHelp + "\n\n" +
 			initHelp + "\n\n" +
 			addHelp + "\n\n" +
-			fixHelp
+			fixHelp + "\n\n" +
+			statusHelp
 	}
 }
 

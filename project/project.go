@@ -221,3 +221,77 @@ func gitInit(path string) error {
 	cmd.Dir = path
 	return cmd.Run()
 }
+
+func Status() (string, error) {
+	lock, err := loadLock()
+	if err != nil {
+		return "", err
+	}
+	var message = &strings.Builder{}
+	fmt.Fprintf(message, "prefix: %s\n", lock.Prefix)
+	fmt.Fprintf(message, "name: %s\n", lock.Name)
+	fmt.Fprintf(message, "version: %s\n", lock.Version)
+	fmt.Fprintf(message, "go version: %s\n", lock.GoVersion)
+	fmt.Fprintf(message, "git: %s\n", enabled(lock.Git))
+	fmt.Fprintln(message, "service list:")
+	var n = 6
+	for _, v := range lock.Service {
+		if len(v) > n {
+			n = len(v)
+		}
+	}
+	var missed bool
+	public := checkService("public")
+	missed = missed || !public.Created
+	message.WriteString(public.Format(lock.Prefix, n))
+	for _, v := range lock.Service {
+		srv := checkService(v)
+		message.WriteString(srv.Format(lock.Prefix, n))
+		missed = missed || !srv.Created
+	}
+	if missed {
+		fmt.Fprintln(message, "---------------------------------------------------------")
+		fmt.Fprintln(message, "Use 'gms fix' to create missed service.")
+	}
+	return message.String(), nil
+}
+
+func checkService(name string) (status ServiceStatus) {
+	status.Name = name
+	if _, err := os.Stat(name); err == nil {
+		status.Created = true
+		if _, err := os.Stat(fmt.Sprintf("%s/.git", name)); err == nil {
+			status.Git = true
+		}
+	}
+	return
+}
+
+type ServiceStatus struct {
+	Name    string
+	Created bool
+	Git     bool
+}
+
+func (s ServiceStatus) Format(prefix string, n int) string {
+	repeat := n - len(s.Name)
+	if repeat < 0 {
+		repeat = 0
+	}
+	padding := strings.Repeat(" ", repeat)
+	var status string
+	if s.Created {
+		status = "CREATED"
+	} else {
+		status = "MISSED"
+	}
+	name := fmt.Sprintf("%s/%s", prefix, s.Name)
+	return fmt.Sprintf("    %s%s %7s| GIT: %s\n", name, padding, status, enabled(s.Git))
+}
+
+func enabled(b bool) string {
+	if b {
+		return "enabled"
+	}
+	return "disabled"
+}
