@@ -19,6 +19,7 @@ type LockInfo struct {
 	Version   string   `yaml:"version"`
 	Service   []string `yaml:"service"`
 	GoVersion string   `yaml:"goversion"`
+	Git       bool     `yaml:"git"`
 }
 
 func loadLock() (*LockInfo, error) {

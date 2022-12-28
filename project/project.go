@@ -7,7 +7,9 @@ import (
 	"github.com/cro4k/gms/data"
 	"github.com/cro4k/gms/version"
 	"github.com/gobuffalo/packr/v2"
+	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -26,6 +28,7 @@ type CreateOption struct {
 	Prefix  string
 	Service []string
 	Go      string
+	Git     bool
 }
 
 func (c CreateOption) lockfile() *LockInfo {
@@ -35,6 +38,7 @@ func (c CreateOption) lockfile() *LockInfo {
 		Version:   version.Version,
 		Service:   c.Service,
 		GoVersion: c.Go,
+		Git:       c.Git,
 	}
 	if info.Name == "" {
 		info.Name = "example"
@@ -131,6 +135,11 @@ func create(resources *packr.Box, path string, name string, layout string, repla
 		modContent += "\n" + fmt.Sprintf("replace %s v0.0.0 => ../public\n", publicModule)
 	}
 	err := os.WriteFile(mod, []byte(modContent), 0644)
+	if lock.Git {
+		if err := gitInit(fmt.Sprintf("%s/%s", path, name)); err != nil {
+			log.Println("WARNING: init git repository on error:", err)
+		}
+	}
 	return err
 }
 
@@ -205,4 +214,10 @@ func Fix() error {
 		}
 	}
 	return nil
+}
+
+func gitInit(path string) error {
+	cmd := exec.Command("git", "init")
+	cmd.Dir = path
+	return cmd.Run()
 }

@@ -25,6 +25,7 @@ func main() {
 			Prefix:  cmd.Val("p", "-prefix"),
 			Service: cmd.Others,
 			Go:      cmd.Val("go"),
+			Git:     cmd.Is("git"),
 		}
 		err = project.Create(opt)
 	case "init":
