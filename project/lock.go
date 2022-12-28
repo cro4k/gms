@@ -2,12 +2,14 @@ package project
 
 import (
 	"fmt"
+	"github.com/cro4k/gms/utils/fileutil"
 	"gopkg.in/yaml.v3"
+	"log"
 	"os"
 )
 
 const (
-	lockfile  = "gms.lock.yml"
+	lockfile  = ".gms/lock.yml"
 	goVersion = "1.18"
 )
 
@@ -37,6 +39,12 @@ func loadLock() (*LockInfo, error) {
 }
 
 func (i *LockInfo) create(path string) error {
+	gmsPath := fmt.Sprintf("%s/.gms", path)
+	_ = os.MkdirAll(gmsPath, 0777)
+	if err := fileutil.Hide(gmsPath); err != nil {
+		log.Println(err)
+	}
+
 	var filepath = lockfile
 	if path != "" {
 		filepath = fmt.Sprintf("%s/%s", path, filepath)
